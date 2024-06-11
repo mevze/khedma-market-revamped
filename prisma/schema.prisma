@@ -1,0 +1,119 @@
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  admin
+  super_admin
+}
+
+enum SignedUpAs {
+  freelancer
+  business
+  client
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  hashedPassword String?  @map("hashed_password")
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  role           UserRole @default(user)
+
+  signedUpAs   SignedUpAs? @map("signed_up_as")
+  businessId   String?     @map("business_id")
+  freelancerId String?     @map("freelancer_id")
+
+  sessions                Session[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  freelancer Freelancer? @relation(fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+model Business {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+
+  name    String
+  logo    String?
+  website String?
+  phone   String?
+  address String?
+  city    String?
+  state   String?
+  country String?
+  zip     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("businesses")
+}
+
+model Freelancer {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+
+  name    String
+  avatar  String?
+  bio     String?
+  website String?
+  phone   String?
+  address String?
+  city    String?
+  state   String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  users     User[]
+
+  @@map("freelancers")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("password_reset_tokens")
+}
+
+model Session {
+  id        String   @id
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sessions")
+}
