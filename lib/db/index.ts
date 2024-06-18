@@ -1,5 +1,6 @@
+import { Lucia } from "lucia";
+import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
 import { PrismaClient } from "@prisma/client";
-
 import { env } from "@/lib/env";
 
 const globalForPrisma = globalThis as unknown as {
@@ -14,3 +15,13 @@ export const db =
   });
 
 if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+
+const adapter = new PrismaAdapter(db.session, db.user);
+
+export const lucia = new Lucia(adapter, {
+  sessionCookie: {
+    attributes: {
+      secure: process.env.NODE_ENV === "production",
+    },
+  },
+});

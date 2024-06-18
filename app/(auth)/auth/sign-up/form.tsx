@@ -2,8 +2,9 @@
 
 import { signup } from '@/app/(auth)/auth/sign-up/actions'
 import { useActionState } from 'react'
+import React from 'react';
 
-export function SignUpForm(){
+export default function SignUpForm(){
     const initialState = {
         errors: {
           name: undefined,
@@ -29,7 +30,7 @@ export function SignUpForm(){
             {state?.errors?.password && <p>{state.errors.password}</p>}
             <input name="confirmPassword"/>
             {state?.errors?.confirmPassword && <p>{state.errors.confirmPassword}</p>}
-            <button disabled={pending}>
+            <button disabled={pending}> 
                 {pending ? 'Submitting..' : 'Sign up'}
             </button>
         </form>

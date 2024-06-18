@@ -1,9 +1,10 @@
-'use server';
+'use server'
 
 import { signUpSchema } from "@/lib/auth/validators/signupSchema";
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
+import { lucia } from "@/lib/db";
 import { db } from "@/lib/db";
-import { createSession } from "@/lib/auth/session";
+import React from "react";
 
 export async function signup(formData: any) {
   const validationResult = signUpSchema.safeParse({
@@ -11,7 +12,7 @@ export async function signup(formData: any) {
     lastname: formData.lastname,
     email: formData.email,
     password: formData.password,
-    confirmPassword: formData.confirmPassword
+    confirmPassword: formData.confirmPassword,
   });
 
   if (!validationResult.success) {
@@ -24,14 +25,27 @@ export async function signup(formData: any) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const data = await db.user.create({
-    data: { name, lastname, email, hashedPassword },
-    select: { id: true }
-  });
+  try {
+    // Create user in the database
+    const user = await db.user.create({
+      data: {
+        name,
+        lastname,
+        email,
+        hashedPassword,
+      },
+      select: { id: true }, 
+    });
 
-  const user = data;
+    const session = await lucia.createSession(user.id, {});
 
-  await createSession(user.id)
 
-  return { user };
+
+    return { user };
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return {
+      errors: { signup: "Failed to create user" },
+    };
+  }
 }
